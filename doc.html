@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ISS Tracker</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.85/Build/Cesium/Cesium.js"></script>
+    <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.85/Build/Cesium/Widgets/widgets.css">
+    <style>
+        #cesiumContainer {
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="cesiumContainer"></div>
+    <script>
+        // Create a Cesium viewer.
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+            imageryProvider: new Cesium.TileMapServiceImageryProvider({
+                url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+            }),
+            baseLayerPicker: false,
+            timeline: false,
+            animation: false,
+            geocoder: false,
+            sceneModePicker: false
+        });
+
+        // Create a satellite icon for the ISS.
+        const issIcon = viewer.entities.add({
+            position: Cesium.Cartesian3.fromDegrees(0, 0),
+            billboard: {
+                image: '/Users/siri/Downloads', // Replace with the path or URL to your ISS icon image
+                width: 32,
+                height: 32
+            }
+        });
+
+        // Create a label for displaying country names.
+        const countryLabel = viewer.entities.add({
+            position: Cesium.Cartesian3.fromDegrees(0, 0),
+            label: {
+                text: '',
+                font: '14px sans-serif',
+                showBackground: true,
+                horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+                pixelOffset: new Cesium.Cartesian2(0, -20)
+            }
+        });
+
+        // Update country name based on the camera's position.
+        viewer.scene.postRender.addEventListener(function() {
+            const cameraPosition = viewer.scene.camera.positionWC;
+            const cartographicPosition = Cesium.Cartographic.fromCartesian(cameraPosition);
+            const longitude = Cesium.Math.toDegrees(cartographicPosition.longitude);
+            const latitude = Cesium.Math.toDegrees(cartographicPosition.latitude);
+
+            // Request country name from a geocoding service (e.g., Nominatim).
+            // Replace 'YOUR_NOMINATIM_API_ENDPOINT' with the appropriate API endpoint.
+            fetch(`f0ae1d7e18b28f6a55b6bf336ed5830c?lat=${latitude}&lon=${longitude}&format=json`)
+                .then(response => response.json())
+                .then(data => {
+                    const countryName = data.address.country; // Adjust this based on your API response structure.
+                    countryLabel.label.text = countryName;
+                })
+                .catch(error => {
+                    console.error('Error fetching country data:', error);
+                });
+        });
+    </script>
+</body>
+</html>
